@@ -13,6 +13,23 @@ interface Preset {
   createdAt: number;
 }
 
+type Theme = 'dark' | 'light' | 'pedal';
+
+interface ThemeConfig {
+  id: Theme;
+  name: string;
+  icon: string;
+  colors: {
+    bgPrimary: string;
+    bgSecondary: string;
+    bgTertiary: string;
+    textPrimary: string;
+    textSecondary: string;
+    accent: string;
+    border: string;
+  };
+}
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const CLOCK_POSITIONS = [
   '7h', '8h', '9h', '10h', '11h', '12h', '1h', '2h', '3h', '4h', '5h'
@@ -48,6 +65,51 @@ const DEFAULT_PRESET: Omit<Preset, 'id' | 'createdAt'> = {
   p3: '12h',
 };
 
+const THEMES: ThemeConfig[] = [
+  {
+    id: 'dark',
+    name: 'Escuro',
+    icon: '🌙',
+    colors: {
+      bgPrimary: '#121212',
+      bgSecondary: '#1e1e1e',
+      bgTertiary: '#2a2a2a',
+      textPrimary: '#e0e0e0',
+      textSecondary: '#a0a0a0',
+      accent: '#f5a623',
+      border: '#2a2a2a',
+    },
+  },
+  {
+    id: 'light',
+    name: 'Claro',
+    icon: '☀️',
+    colors: {
+      bgPrimary: '#f5f5f5',
+      bgSecondary: '#ffffff',
+      bgTertiary: '#e8e8e8',
+      textPrimary: '#1a1a1a',
+      textSecondary: '#555555',
+      accent: '#f5a623',
+      border: '#d0d0d0',
+    },
+  },
+  {
+    id: 'pedal',
+    name: 'Pedal',
+    icon: '🎸',
+    colors: {
+      bgPrimary: '#1a1a1a',
+      bgSecondary: '#2a2a2a',
+      bgTertiary: '#3a3a3a',
+      textPrimary: '#ffffff',
+      textSecondary: '#cccccc',
+      accent: '#ff8c00',
+      border: '#444444',
+    },
+  },
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function loadPresets(): Preset[] {
   try {
@@ -62,8 +124,31 @@ function savePresets(data: Preset[]) {
   localStorage.setItem('m-vave-presets', JSON.stringify(data));
 }
 
+function loadTheme(): Theme {
+  try {
+    const theme = localStorage.getItem('m-vave-theme');
+    if (theme === 'dark' || theme === 'light' || theme === 'pedal') {
+      return theme;
+    }
+  } catch {}
+  return 'dark';
+}
+
+function saveTheme(theme: Theme) {
+  localStorage.setItem('m-vave-theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
 function getReverbInfo(typeName: string) {
   return REVERB_TYPES.find(t => t.name === typeName) || REVERB_TYPES[0];
+}
+
+function getThemeConfig(themeId: Theme): ThemeConfig {
+  return THEMES.find(t => t.id === themeId) || THEMES[0];
 }
 
 // Converte posição do relógio em ângulo (7h = -150°, 5h = +150°)
@@ -331,14 +416,17 @@ function KnobVisual({ value, label, color = '#f5a623', size = 64 }: {
 }
 
 // ─── Componente Knob Selector (para formulário) ──────────────────────────────
-function KnobSelector({ label, value, onChange }: { 
+function KnobSelector({ label, value, onChange, theme }: { 
   label: string; 
   value: string; 
   onChange: (v: string) => void;
+  theme: ThemeConfig;
 }) {
   return (
     <div className="flex flex-col items-center">
-      <label className="text-xs text-[#a0a0a0] mb-1 font-medium">{label}</label>
+      <label className="text-xs mb-1 font-medium transition-colors duration-300" style={{ color: theme.colors.textSecondary }}>
+        {label}
+      </label>
       <div className="relative">
         <KnobVisual value={value} label="" size={56} />
         <select
@@ -351,7 +439,12 @@ function KnobSelector({ label, value, onChange }: {
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full p-1.5 bg-[#2a2a2a] border border-[#333] rounded text-[#e0e0e0] text-xs text-center outline-none focus:border-[#f5a623]"
+        className="mt-1 w-full p-1.5 rounded text-xs text-center outline-none transition-all"
+        style={{ 
+          backgroundColor: theme.colors.bgTertiary,
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.textPrimary
+        }}
       >
         {CLOCK_POSITIONS.map(pos => (
           <option key={pos} value={pos}>{pos}</option>
@@ -362,17 +455,24 @@ function KnobSelector({ label, value, onChange }: {
 }
 
 // ─── Componente Preset Card ──────────────────────────────────────────────────
-function PresetCard({ preset, onEdit, onDelete }: { 
+function PresetCard({ preset, onEdit, onDelete, theme }: { 
   preset: Preset; 
   onEdit: () => void; 
   onDelete: () => void;
+  theme: ThemeConfig;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const reverbInfo = getReverbInfo(preset.type);
 
   return (
-    <div className="bg-[#1e1e1e] rounded-2xl shadow-lg border border-[#2a2a2a] relative overflow-hidden">
+    <div 
+      className="rounded-2xl shadow-lg border relative overflow-hidden transition-colors duration-300"
+      style={{ 
+        backgroundColor: theme.colors.bgSecondary,
+        borderColor: theme.colors.border
+      }}
+    >
       {/* Barra de cor do tipo */}
       <div className="absolute top-0 left-0 right-0 h-1" style={{ background: reverbInfo.color }} />
       
@@ -380,7 +480,9 @@ function PresetCard({ preset, onEdit, onDelete }: {
         {/* Header */}
         <div className="flex justify-between items-start mb-3 mt-1">
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-bold text-base truncate">{preset.name}</h3>
+            <h3 className="font-bold text-base truncate transition-colors duration-300" style={{ color: theme.colors.textPrimary }}>
+              {preset.name}
+            </h3>
             <div className="flex items-center gap-1.5 mt-1">
               <span className="text-base">{reverbInfo.icon}</span>
               <span className="text-sm font-semibold" style={{ color: reverbInfo.color }}>
@@ -392,13 +494,18 @@ function PresetCard({ preset, onEdit, onDelete }: {
             <div className="flex gap-1.5 ml-2">
               <button
                 onClick={onDelete}
-                className="px-2.5 py-1 bg-[#cf6679] text-white text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+                className="px-2.5 py-1 text-white text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+                style={{ backgroundColor: '#cf6679' }}
               >
                 ✓ Sim
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
-                className="px-2.5 py-1 bg-[#333] text-[#e0e0e0] text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+                className="px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+                style={{ 
+                  backgroundColor: theme.colors.bgTertiary,
+                  color: theme.colors.textPrimary
+                }}
               >
                 ✕ Não
               </button>
@@ -407,7 +514,11 @@ function PresetCard({ preset, onEdit, onDelete }: {
             <div className="flex gap-1.5 ml-2">
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
+                className="px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-all"
+                style={{ 
+                  backgroundColor: theme.colors.bgTertiary,
+                  color: theme.colors.textSecondary
+                }}
                 aria-label={expanded ? 'Ver knobs' : 'Ver pedal'}
                 title={expanded ? 'Ver knobs' : 'Ver pedal'}
               >
@@ -415,14 +526,22 @@ function PresetCard({ preset, onEdit, onDelete }: {
               </button>
               <button
                 onClick={onEdit}
-                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
+                className="px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-all"
+                style={{ 
+                  backgroundColor: theme.colors.bgTertiary,
+                  color: theme.colors.textSecondary
+                }}
                 aria-label="Editar"
               >
                 ✏️
               </button>
               <button
                 onClick={() => setShowConfirm(true)}
-                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#cf6679] active:scale-95 transition-all"
+                className="px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-all"
+                style={{ 
+                  backgroundColor: theme.colors.bgTertiary,
+                  color: theme.colors.textSecondary
+                }}
                 aria-label="Apagar"
               >
                 🗑️
@@ -437,7 +556,11 @@ function PresetCard({ preset, onEdit, onDelete }: {
             <PedalVisual preset={preset} />
             <button
               onClick={() => setExpanded(false)}
-              className="w-full mt-2 py-1.5 text-xs text-[#a0a0a0] bg-[#2a2a2a] rounded-lg cursor-pointer hover:text-white transition-colors"
+              className="w-full mt-2 py-1.5 text-xs rounded-lg cursor-pointer transition-colors"
+              style={{ 
+                backgroundColor: theme.colors.bgTertiary,
+                color: theme.colors.textSecondary
+              }}
             >
               ▲ Ver knobs
             </button>
@@ -445,7 +568,10 @@ function PresetCard({ preset, onEdit, onDelete }: {
         ) : (
           <>
             {/* Vista padrão: Knobs visuais */}
-            <div className="flex justify-around items-center py-2 bg-[#161616] rounded-xl">
+            <div 
+              className="flex justify-around items-center py-2 rounded-xl transition-colors duration-300"
+              style={{ backgroundColor: theme.colors.bgTertiary }}
+            >
               <KnobVisual value={preset.decay} label="Decay" color={reverbInfo.color} size={56} />
               <KnobVisual value={preset.mix} label="Mix" color={reverbInfo.color} size={56} />
               <KnobVisual value={preset.p1} label="P1" color={reverbInfo.color} size={56} />
@@ -454,7 +580,11 @@ function PresetCard({ preset, onEdit, onDelete }: {
             </div>
             <button
               onClick={() => setExpanded(true)}
-              className="w-full mt-2 py-1.5 text-xs text-[#a0a0a0] bg-[#2a2a2a] rounded-lg cursor-pointer hover:text-white transition-colors"
+              className="w-full mt-2 py-1.5 text-xs rounded-lg cursor-pointer transition-colors"
+              style={{ 
+                backgroundColor: theme.colors.bgTertiary,
+                color: theme.colors.textSecondary
+              }}
             >
               ▼ Ver pedal
             </button>
@@ -473,9 +603,24 @@ export default function App() {
   const [formData, setFormData] = useState<Omit<Preset, 'id' | 'createdAt'>>(DEFAULT_PRESET);
   const [searchTerm, setSearchTerm] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<Theme>(loadTheme());
   const [showFirstTime, setShowFirstTime] = useState(() => {
     return !localStorage.getItem('m-vave-seen-help');
   });
+
+  const themeConfig = getThemeConfig(currentTheme);
+
+  // Aplica o tema ao carregar e quando muda
+  useEffect(() => {
+    applyTheme(currentTheme);
+  }, [currentTheme]);
+
+  const changeTheme = useCallback((theme: Theme) => {
+    setCurrentTheme(theme);
+    saveTheme(theme);
+    setShowThemeSelector(false);
+  }, []);
 
   useEffect(() => {
     savePresets(presets);
@@ -542,24 +687,63 @@ export default function App() {
   const reverbInfo = getReverbInfo(formData.type);
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] font-sans">
+    <div className="min-h-screen font-sans transition-colors duration-300" style={{ 
+      backgroundColor: themeConfig.colors.bgPrimary, 
+      color: themeConfig.colors.textPrimary 
+    }}>
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-sm border-b border-[#2a2a2a] px-4 py-3">
+      <header 
+        className="sticky top-0 z-30 backdrop-blur-sm border-b px-4 py-3 transition-colors duration-300" 
+        style={{ 
+          backgroundColor: `${themeConfig.colors.bgPrimary}f0`,
+          borderColor: themeConfig.colors.border
+        }}
+      >
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-[#1e1e1e] border-2 border-[#f5a623] flex items-center justify-center text-lg">
+            <div 
+              className="w-9 h-9 rounded-full flex items-center justify-center text-lg transition-colors duration-300"
+              style={{ 
+                backgroundColor: themeConfig.colors.bgSecondary,
+                borderColor: themeConfig.colors.accent,
+                borderWidth: '2px',
+                borderStyle: 'solid'
+              }}
+            >
               🎸
             </div>
             <div>
-              <h1 className="text-[#f5a623] font-bold text-base leading-tight">Meu Reverb</h1>
-              <p className="text-[#666] text-[10px] leading-tight">M-Vave Mini Universe</p>
+              <h1 className="font-bold text-base leading-tight transition-colors duration-300" style={{ color: themeConfig.colors.accent }}>
+                Meu Reverb
+              </h1>
+              <p className="text-[10px] leading-tight transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
+                M-Vave Mini Universe
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-[#666]">{presets.length} preset{presets.length !== 1 ? 's' : ''}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
+              {presets.length} preset{presets.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={() => setShowThemeSelector(true)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-all active:scale-90"
+              style={{ 
+                backgroundColor: themeConfig.colors.bgTertiary,
+                color: themeConfig.colors.textSecondary
+              }}
+              aria-label="Mudar tema"
+              title="Mudar tema"
+            >
+              {themeConfig.icon}
+            </button>
             <button
               onClick={() => setShowHelp(true)}
-              className="w-8 h-8 rounded-full bg-[#2a2a2a] text-[#a0a0a0] flex items-center justify-center text-sm font-bold cursor-pointer hover:bg-[#333] hover:text-[#f5a623] transition-all"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-all active:scale-90"
+              style={{ 
+                backgroundColor: themeConfig.colors.bgTertiary,
+                color: themeConfig.colors.textSecondary
+              }}
               aria-label="Ajuda"
             >
               ?
@@ -568,14 +752,84 @@ export default function App() {
         </div>
       </header>
 
+      {/* Modal de Seleção de Tema */}
+      {showThemeSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div 
+            className="rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors duration-300"
+            style={{ 
+              backgroundColor: themeConfig.colors.bgSecondary,
+              border: `1px solid ${themeConfig.colors.border}`
+            }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold transition-colors duration-300" style={{ color: themeConfig.colors.accent }}>
+                🎨 Escolha o Tema
+              </h2>
+              <button
+                onClick={() => setShowThemeSelector(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                style={{ 
+                  backgroundColor: themeConfig.colors.bgTertiary,
+                  color: themeConfig.colors.textSecondary
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {THEMES.map(theme => (
+                <button
+                  key={theme.id}
+                  onClick={() => changeTheme(theme.id)}
+                  className="w-full p-4 rounded-xl flex items-center gap-4 cursor-pointer transition-all active:scale-[0.98]"
+                  style={{
+                    backgroundColor: currentTheme === theme.id ? `${theme.colors.accent}20` : themeConfig.colors.bgTertiary,
+                    border: currentTheme === theme.id ? `2px solid ${theme.colors.accent}` : `2px solid transparent`
+                  }}
+                >
+                  <span className="text-3xl">{theme.icon}</span>
+                  <div className="flex-1 text-left">
+                    <p className="font-bold transition-colors duration-300" style={{ color: themeConfig.colors.textPrimary }}>
+                      {theme.name}
+                    </p>
+                    <div className="flex gap-1 mt-1">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: theme.colors.bgPrimary, border: '1px solid #555' }} />
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: theme.colors.bgSecondary, border: '1px solid #555' }} />
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: theme.colors.accent }} />
+                    </div>
+                  </div>
+                  {currentTheme === theme.id && (
+                    <span className="text-xl" style={{ color: theme.colors.accent }}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-center mt-4 transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
+              Sua preferência será salva automaticamente
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Primeira Vez */}
       {showFirstTime && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in">
-          <div className="bg-[#1e1e1e] rounded-2xl p-6 max-w-sm w-full border border-[#f5a623]/30 shadow-2xl">
+          <div 
+            className="rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors duration-300"
+            style={{ 
+              backgroundColor: themeConfig.colors.bgSecondary,
+              border: `1px solid ${themeConfig.colors.accent}40`
+            }}
+          >
             <div className="text-center mb-4">
               <div className="text-5xl mb-2">🎸</div>
-              <h2 className="text-[#f5a623] text-xl font-bold">Bem-vindo ao Meu Reverb!</h2>
-              <p className="text-[#a0a0a0] text-sm mt-2">
+              <h2 className="text-xl font-bold transition-colors duration-300" style={{ color: themeConfig.colors.accent }}>
+                Bem-vindo ao Meu Reverb!
+              </h2>
+              <p className="text-sm mt-2 transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
                 Salve e gerencie os presets do seu pedal M-Vave Mini Universe
               </p>
             </div>
@@ -609,7 +863,11 @@ export default function App() {
                 setShowFirstTime(false);
                 localStorage.setItem('m-vave-seen-help', 'true');
               }}
-              className="w-full py-3 bg-[#f5a623] text-black font-bold rounded-xl cursor-pointer hover:bg-[#e09500] active:scale-[0.98] transition-all"
+              className="w-full py-3 font-bold rounded-xl cursor-pointer active:scale-[0.98] transition-all"
+              style={{ 
+                backgroundColor: themeConfig.colors.accent,
+                color: '#000'
+              }}
             >
               Começar a Usar 🚀
             </button>
@@ -620,12 +878,24 @@ export default function App() {
       {/* Modal de Ajuda */}
       {showHelp && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in">
-          <div className="bg-[#1e1e1e] rounded-t-2xl sm:rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border-t sm:border border-[#2a2a2a]">
+          <div 
+            className="rounded-t-2xl sm:rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border-t sm:border transition-colors duration-300"
+            style={{ 
+              backgroundColor: themeConfig.colors.bgSecondary,
+              borderColor: themeConfig.colors.border
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-[#f5a623] text-lg font-bold">📖 Como Usar</h2>
+              <h2 className="text-lg font-bold transition-colors duration-300" style={{ color: themeConfig.colors.accent }}>
+                📖 Como Usar
+              </h2>
               <button
                 onClick={() => setShowHelp(false)}
-                className="w-8 h-8 rounded-full bg-[#2a2a2a] text-[#a0a0a0] flex items-center justify-center cursor-pointer hover:bg-[#333] transition-all"
+                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                style={{ 
+                  backgroundColor: themeConfig.colors.bgTertiary,
+                  color: themeConfig.colors.textSecondary
+                }}
               >
                 ✕
               </button>
@@ -718,7 +988,11 @@ export default function App() {
 
             <button
               onClick={() => setShowHelp(false)}
-              className="w-full mt-4 py-3 bg-[#2a2a2a] text-[#e0e0e0] font-bold rounded-xl cursor-pointer hover:bg-[#333] active:scale-[0.98] transition-all"
+              className="w-full mt-4 py-3 font-bold rounded-xl cursor-pointer active:scale-[0.98] transition-all"
+              style={{ 
+                backgroundColor: themeConfig.colors.bgTertiary,
+                color: themeConfig.colors.textPrimary
+              }}
             >
               Entendi! 👍
             </button>
@@ -729,46 +1003,59 @@ export default function App() {
       <main className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Formulário */}
         {showForm && (
-          <div className="bg-[#1e1e1e] rounded-2xl p-4 mb-4 shadow-xl border border-[#2a2a2a] animate-in">
-            <h2 className="text-[#f5a623] text-lg font-bold mb-4 flex items-center gap-2">
+          <div 
+            className="rounded-2xl p-4 mb-4 shadow-xl border animate-in transition-colors duration-300"
+            style={{ 
+              backgroundColor: themeConfig.colors.bgSecondary,
+              borderColor: themeConfig.colors.border
+            }}
+          >
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 transition-colors duration-300" style={{ color: themeConfig.colors.accent }}>
               {editId ? '✏️ Editar Preset' : '✨ Novo Preset'}
             </h2>
 
             {/* Nome */}
             <div className="mb-3">
-              <label className="block text-xs text-[#a0a0a0] mb-1 font-medium">Nome da Música / Preset</label>
+              <label className="block text-xs mb-1 font-medium transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
+                Nome da Música / Preset
+              </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => updateField('name', e.target.value)}
                 placeholder="Ex: Adoração, Ocean Eyes..."
-                className="w-full p-2.5 bg-[#2a2a2a] border border-[#333] rounded-xl text-[#e0e0e0] text-sm outline-none focus:border-[#f5a623] transition-colors placeholder:text-[#555]"
+                className="w-full p-2.5 rounded-xl text-sm outline-none transition-all"
+                style={{ 
+                  backgroundColor: themeConfig.colors.bgTertiary,
+                  border: `1px solid ${themeConfig.colors.border}`,
+                  color: themeConfig.colors.textPrimary
+                }}
+                onFocus={e => e.target.style.borderColor = themeConfig.colors.accent}
+                onBlur={e => e.target.style.borderColor = themeConfig.colors.border}
                 autoFocus
               />
             </div>
 
             {/* Tipo de Reverb */}
             <div className="mb-4">
-              <label className="block text-xs text-[#a0a0a0] mb-2 font-medium">Tipo de Reverb</label>
+              <label className="block text-xs mb-2 font-medium transition-colors duration-300" style={{ color: themeConfig.colors.textSecondary }}>
+                Tipo de Reverb
+              </label>
               <div className="grid grid-cols-3 gap-2">
                 {REVERB_TYPES.map(type => (
                   <button
                     key={type.name}
                     onClick={() => updateField('type', type.name)}
-                    className={`p-2 rounded-xl text-center transition-all cursor-pointer active:scale-95 ${
-                      formData.type === type.name
-                        ? 'border-2 shadow-lg'
-                        : 'bg-[#2a2a2a] border-2 border-transparent'
-                    }`}
-                    style={formData.type === type.name ? {
-                      borderColor: type.color,
-                      background: `${type.color}15`,
-                      boxShadow: `0 0 12px ${type.color}30`
-                    } : {}}
+                    className="p-2 rounded-xl text-center transition-all cursor-pointer active:scale-95"
+                    style={{
+                      backgroundColor: formData.type === type.name ? `${type.color}15` : themeConfig.colors.bgTertiary,
+                      border: `2px solid ${formData.type === type.name ? type.color : 'transparent'}`,
+                      boxShadow: formData.type === type.name ? `0 0 12px ${type.color}30` : 'none'
+                    }}
                   >
                     <span className="text-lg block">{type.icon}</span>
                     <span className="text-[10px] font-bold block mt-0.5" style={{
-                      color: formData.type === type.name ? type.color : '#a0a0a0'
+                      color: formData.type === type.name ? type.color : themeConfig.colors.textSecondary
                     }}>
                       {type.name}
                     </span>
@@ -787,6 +1074,7 @@ export default function App() {
                     label={label}
                     value={formData[key]}
                     onChange={v => updateField(key, v)}
+                    theme={themeConfig}
                   />
                 ))}
               </div>
@@ -813,13 +1101,21 @@ export default function App() {
             <div className="flex gap-2">
               <button
                 onClick={saveForm}
-                className="flex-1 py-3 bg-[#f5a623] text-black font-bold rounded-xl text-sm cursor-pointer hover:bg-[#e09500] active:scale-[0.98] transition-all"
+                className="flex-1 py-3 font-bold rounded-xl text-sm cursor-pointer active:scale-[0.98] transition-all"
+                style={{ 
+                  backgroundColor: themeConfig.colors.accent,
+                  color: currentTheme === 'light' ? '#000' : '#000'
+                }}
               >
                 💾 Salvar
               </button>
               <button
                 onClick={cancelForm}
-                className="flex-1 py-3 bg-[#2a2a2a] text-[#a0a0a0] font-bold rounded-xl text-sm cursor-pointer hover:bg-[#333] active:scale-[0.98] transition-all"
+                className="flex-1 py-3 font-bold rounded-xl text-sm cursor-pointer active:scale-[0.98] transition-all"
+                style={{ 
+                  backgroundColor: themeConfig.colors.bgTertiary,
+                  color: themeConfig.colors.textSecondary
+                }}
               >
                 Cancelar
               </button>
@@ -835,7 +1131,14 @@ export default function App() {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="🔍 Buscar presets..."
-              className="w-full p-2.5 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl text-[#e0e0e0] text-sm outline-none focus:border-[#f5a623] transition-colors placeholder:text-[#555]"
+              className="w-full p-2.5 rounded-xl text-sm outline-none transition-all"
+              style={{ 
+                backgroundColor: themeConfig.colors.bgSecondary,
+                border: `1px solid ${themeConfig.colors.border}`,
+                color: themeConfig.colors.textPrimary
+              }}
+              onFocus={e => e.target.style.borderColor = themeConfig.colors.accent}
+              onBlur={e => e.target.style.borderColor = themeConfig.colors.border}
             />
           </div>
         )}
@@ -864,6 +1167,7 @@ export default function App() {
               preset={preset}
               onEdit={() => openEdit(preset.id)}
               onDelete={() => deletePreset(preset.id)}
+              theme={themeConfig}
             />
           ))}
         </div>
@@ -873,7 +1177,12 @@ export default function App() {
       {!showForm && (
         <button
           onClick={openNew}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-[#f5a623] text-black rounded-full shadow-lg shadow-[#f5a623]/30 flex items-center justify-center text-2xl font-bold cursor-pointer hover:bg-[#e09500] active:scale-90 transition-all z-40"
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl font-bold cursor-pointer active:scale-90 transition-all z-40"
+          style={{ 
+            backgroundColor: themeConfig.colors.accent,
+            color: currentTheme === 'light' ? '#000' : '#000',
+            boxShadow: `0 4px 12px ${themeConfig.colors.accent}40`
+          }}
           aria-label="Novo Preset"
         >
           +
