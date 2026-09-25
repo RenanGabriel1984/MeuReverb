@@ -74,6 +74,192 @@ function clockToAngle(position: string): number {
   return -150 + (idx * 30);
 }
 
+// ─── Componente Pedal Visual ─────────────────────────────────────────────────
+function PedalVisual({ preset }: { preset: Preset }) {
+  const reverbInfo = getReverbInfo(preset.type);
+  
+  const getKnobAngle = (value: string) => {
+    const idx = CLOCK_POSITIONS.indexOf(value);
+    if (idx === -1) return 0;
+    return -150 + (idx * 30);
+  };
+
+  const renderKnob = (x: number, y: number, value: string, label: string, size = 36) => {
+    const angle = getKnobAngle(value);
+    const r = size / 2;
+    const indicatorLength = r - 5;
+    const rad = (angle - 90) * (Math.PI / 180);
+    const x2 = x + indicatorLength * Math.cos(rad);
+    const y2 = y + indicatorLength * Math.sin(rad);
+
+    return (
+      <g key={label}>
+        {/* Tick marks */}
+        {CLOCK_POSITIONS.map((pos, i) => {
+          const tickAngle = -150 + (i * 30);
+          const tickRad = (tickAngle - 90) * (Math.PI / 180);
+          const innerR = r + 3;
+          const outerR = r + 7;
+          const isActive = pos === value;
+          return (
+            <line
+              key={i}
+              x1={x + innerR * Math.cos(tickRad)}
+              y1={y + innerR * Math.sin(tickRad)}
+              x2={x + outerR * Math.cos(tickRad)}
+              y2={y + outerR * Math.sin(tickRad)}
+              stroke={isActive ? reverbInfo.color : '#555'}
+              strokeWidth={isActive ? 2.5 : 1}
+              strokeLinecap="round"
+            />
+          );
+        })}
+        
+        {/* Base do knob */}
+        <circle cx={x} cy={y} r={r} fill="#1a1a1a" stroke="#444" strokeWidth="1.5" />
+        <circle cx={x} cy={y} r={r - 3} fill="#2a2a2a" />
+        
+        {/* Centro */}
+        <circle cx={x} cy={y} r={3.5} fill="#444" />
+        
+        {/* Indicador */}
+        <line
+          x1={x} y1={y}
+          x2={x2} y2={y2}
+          stroke={reverbInfo.color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <circle cx={x2} cy={y2} r="2.5" fill={reverbInfo.color} />
+        
+        {/* Label */}
+        <text
+          x={x}
+          y={y + r + 16}
+          textAnchor="middle"
+          fontSize="9"
+          fill="#999"
+          fontFamily="system-ui, sans-serif"
+        >
+          {label}
+        </text>
+        <text
+          x={x}
+          y={y + r + 27}
+          textAnchor="middle"
+          fontSize="8"
+          fill="#fff"
+          fontWeight="bold"
+          fontFamily="system-ui, sans-serif"
+        >
+          {value}
+        </text>
+      </g>
+    );
+  };
+
+  return (
+    <div className="w-full flex justify-center py-2">
+      <svg viewBox="0 0 260 320" className="w-full max-w-[260px]">
+        <defs>
+          <linearGradient id={`pedalGrad-${preset.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#f5a623" />
+            <stop offset="50%" stopColor="#e09500" />
+            <stop offset="100%" stopColor="#c47f00" />
+          </linearGradient>
+          <filter id={`pedalShadow-${preset.id}`}>
+            <feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.4" />
+          </filter>
+        </defs>
+        
+        {/* Sombra */}
+        <rect x="18" y="18" width="224" height="284" rx="18" fill="#000" opacity="0.3" filter={`url(#pedalShadow-${preset.id})`} />
+        
+        {/* Corpo principal */}
+        <rect x="18" y="18" width="224" height="284" rx="18" fill={`url(#pedalGrad-${preset.id})`} />
+        
+        {/* Borda interna */}
+        <rect x="22" y="22" width="216" height="276" rx="16" fill="none" stroke="#000" strokeWidth="1.5" opacity="0.2" />
+        
+        {/* Parafusos nos cantos */}
+        <circle cx="34" cy="34" r="4" fill="#c47f00" stroke="#a06800" strokeWidth="1" />
+        <circle cx="226" cy="34" r="4" fill="#c47f00" stroke="#a06800" strokeWidth="1" />
+        <circle cx="34" cy="286" r="4" fill="#c47f00" stroke="#a06800" strokeWidth="1" />
+        <circle cx="226" cy="286" r="4" fill="#c47f00" stroke="#a06800" strokeWidth="1" />
+        
+        {/* Área dos knobs (painel escuro) */}
+        <rect x="30" y="45" width="200" height="180" rx="10" fill="#111" opacity="0.85" />
+        <rect x="30" y="45" width="200" height="180" rx="10" fill="none" stroke="#333" strokeWidth="0.5" />
+        
+        {/* Knobs linha superior: Decay, Mix, Param1 */}
+        {renderKnob(72, 90, preset.decay, 'Decay', 32)}
+        {renderKnob(130, 90, preset.mix, 'Mix', 32)}
+        {renderKnob(188, 90, preset.p1, 'Param 1', 32)}
+        
+        {/* Seletor central de tipo */}
+        <circle cx="130" cy="155" r="22" fill="#111" stroke="#444" strokeWidth="1.5" />
+        <circle cx="130" cy="155" r="18" fill="#1a1a1a" />
+        <text
+          x="130"
+          y="151"
+          textAnchor="middle"
+          fontSize="16"
+        >
+          {reverbInfo.icon}
+        </text>
+        <text
+          x="130"
+          y="167"
+          textAnchor="middle"
+          fontSize="9"
+          fill={reverbInfo.color}
+          fontWeight="bold"
+          fontFamily="system-ui, sans-serif"
+        >
+          {preset.type}
+        </text>
+        
+        {/* Knobs linha inferior: Param2, Param3 */}
+        {renderKnob(88, 195, preset.p2, 'Param 2', 32)}
+        {renderKnob(172, 195, preset.p3, 'Param 3', 32)}
+        
+        {/* LED indicador */}
+        <circle cx="130" cy="240" r="4" fill={reverbInfo.color} opacity="0.9" />
+        <circle cx="130" cy="240" r="6" fill={reverbInfo.color} opacity="0.2" />
+        
+        {/* Logo */}
+        <text
+          x="130"
+          y="262"
+          textAnchor="middle"
+          fontSize="12"
+          fill="#000"
+          fontWeight="bold"
+          fontFamily="system-ui, sans-serif"
+          opacity="0.6"
+        >
+          M-VAVE
+        </text>
+        <text
+          x="130"
+          y="276"
+          textAnchor="middle"
+          fontSize="8"
+          fill="#000"
+          fontFamily="system-ui, sans-serif"
+          opacity="0.5"
+        >
+          MINI UNIVERSE
+        </text>
+        
+        {/* Footswitch */}
+        <circle cx="130" cy="295" r="10" fill="#333" stroke="#555" strokeWidth="1" />
+        <circle cx="130" cy="295" r="6" fill="#2a2a2a" />
+      </svg>
+    </div>
+  );
+}
+
 // ─── Componente Knob Visual ───────────────────────────────────────────────────
 function KnobVisual({ value, label, color = '#f5a623', size = 64 }: { 
   value: string; 
@@ -182,66 +368,98 @@ function PresetCard({ preset, onEdit, onDelete }: {
   onDelete: () => void;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const reverbInfo = getReverbInfo(preset.type);
 
   return (
-    <div className="bg-[#1e1e1e] rounded-2xl p-4 shadow-lg border border-[#2a2a2a] relative overflow-hidden">
+    <div className="bg-[#1e1e1e] rounded-2xl shadow-lg border border-[#2a2a2a] relative overflow-hidden">
       {/* Barra de cor do tipo */}
       <div className="absolute top-0 left-0 right-0 h-1" style={{ background: reverbInfo.color }} />
       
-      {/* Header */}
-      <div className="flex justify-between items-start mb-3 mt-1">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-white font-bold text-base truncate">{preset.name}</h3>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-base">{reverbInfo.icon}</span>
-            <span className="text-sm font-semibold" style={{ color: reverbInfo.color }}>
-              {preset.type}
-            </span>
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-3 mt-1">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-bold text-base truncate">{preset.name}</h3>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-base">{reverbInfo.icon}</span>
+              <span className="text-sm font-semibold" style={{ color: reverbInfo.color }}>
+                {preset.type}
+              </span>
+            </div>
           </div>
+          {showConfirm ? (
+            <div className="flex gap-1.5 ml-2">
+              <button
+                onClick={onDelete}
+                className="px-2.5 py-1 bg-[#cf6679] text-white text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+              >
+                ✓ Sim
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-2.5 py-1 bg-[#333] text-[#e0e0e0] text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+              >
+                ✕ Não
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5 ml-2">
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
+                aria-label={expanded ? 'Ver knobs' : 'Ver pedal'}
+                title={expanded ? 'Ver knobs' : 'Ver pedal'}
+              >
+                {expanded ? '🎛️' : '🎸'}
+              </button>
+              <button
+                onClick={onEdit}
+                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
+                aria-label="Editar"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#cf6679] active:scale-95 transition-all"
+                aria-label="Apagar"
+              >
+                🗑️
+              </button>
+            </div>
+          )}
         </div>
-        {showConfirm ? (
-          <div className="flex gap-1.5 ml-2">
+
+        {/* Vista expandida: Pedal visual */}
+        {expanded ? (
+          <div className="animate-in">
+            <PedalVisual preset={preset} />
             <button
-              onClick={onDelete}
-              className="px-2.5 py-1 bg-[#cf6679] text-white text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+              onClick={() => setExpanded(false)}
+              className="w-full mt-2 py-1.5 text-xs text-[#a0a0a0] bg-[#2a2a2a] rounded-lg cursor-pointer hover:text-white transition-colors"
             >
-              ✓ Sim
-            </button>
-            <button
-              onClick={() => setShowConfirm(false)}
-              className="px-2.5 py-1 bg-[#333] text-[#e0e0e0] text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
-            >
-              ✕ Não
+              ▲ Ver knobs
             </button>
           </div>
         ) : (
-          <div className="flex gap-1.5 ml-2">
+          <>
+            {/* Vista padrão: Knobs visuais */}
+            <div className="flex justify-around items-center py-2 bg-[#161616] rounded-xl">
+              <KnobVisual value={preset.decay} label="Decay" color={reverbInfo.color} size={56} />
+              <KnobVisual value={preset.mix} label="Mix" color={reverbInfo.color} size={56} />
+              <KnobVisual value={preset.p1} label="P1" color={reverbInfo.color} size={56} />
+              <KnobVisual value={preset.p2} label="P2" color={reverbInfo.color} size={56} />
+              <KnobVisual value={preset.p3} label="P3" color={reverbInfo.color} size={56} />
+            </div>
             <button
-              onClick={onEdit}
-              className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
-              aria-label="Editar"
+              onClick={() => setExpanded(true)}
+              className="w-full mt-2 py-1.5 text-xs text-[#a0a0a0] bg-[#2a2a2a] rounded-lg cursor-pointer hover:text-white transition-colors"
             >
-              ✏️
+              ▼ Ver pedal
             </button>
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#cf6679] active:scale-95 transition-all"
-              aria-label="Apagar"
-            >
-              🗑️
-            </button>
-          </div>
+          </>
         )}
-      </div>
-
-      {/* Knobs visuais */}
-      <div className="flex justify-around items-center py-2 bg-[#161616] rounded-xl">
-        <KnobVisual value={preset.decay} label="Decay" color={reverbInfo.color} size={56} />
-        <KnobVisual value={preset.mix} label="Mix" color={reverbInfo.color} size={56} />
-        <KnobVisual value={preset.p1} label="P1" color={reverbInfo.color} size={56} />
-        <KnobVisual value={preset.p2} label="P2" color={reverbInfo.color} size={56} />
-        <KnobVisual value={preset.p3} label="P3" color={reverbInfo.color} size={56} />
       </div>
     </div>
   );
