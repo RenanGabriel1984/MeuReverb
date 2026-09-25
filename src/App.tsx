@@ -472,6 +472,10 @@ export default function App() {
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Omit<Preset, 'id' | 'createdAt'>>(DEFAULT_PRESET);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
+  const [showFirstTime, setShowFirstTime] = useState(() => {
+    return !localStorage.getItem('m-vave-seen-help');
+  });
 
   useEffect(() => {
     savePresets(presets);
@@ -551,11 +555,176 @@ export default function App() {
               <p className="text-[#666] text-[10px] leading-tight">M-Vave Mini Universe</p>
             </div>
           </div>
-          <div className="text-right">
+          <div className="flex items-center gap-3">
             <span className="text-xs text-[#666]">{presets.length} preset{presets.length !== 1 ? 's' : ''}</span>
+            <button
+              onClick={() => setShowHelp(true)}
+              className="w-8 h-8 rounded-full bg-[#2a2a2a] text-[#a0a0a0] flex items-center justify-center text-sm font-bold cursor-pointer hover:bg-[#333] hover:text-[#f5a623] transition-all"
+              aria-label="Ajuda"
+            >
+              ?
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Modal de Primeira Vez */}
+      {showFirstTime && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in">
+          <div className="bg-[#1e1e1e] rounded-2xl p-6 max-w-sm w-full border border-[#f5a623]/30 shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-2">🎸</div>
+              <h2 className="text-[#f5a623] text-xl font-bold">Bem-vindo ao Meu Reverb!</h2>
+              <p className="text-[#a0a0a0] text-sm mt-2">
+                Salve e gerencie os presets do seu pedal M-Vave Mini Universe
+              </p>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3 p-3 bg-[#2a2a2a] rounded-xl">
+                <span className="text-2xl">➕</span>
+                <div>
+                  <p className="text-white text-sm font-bold">Criar Presets</p>
+                  <p className="text-[#a0a0a0] text-xs">Toque no botão + para salvar configurações</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-[#2a2a2a] rounded-xl">
+                <span className="text-2xl">🎛️</span>
+                <div>
+                  <p className="text-white text-sm font-bold">9 Tipos de Reverb</p>
+                  <p className="text-[#a0a0a0] text-xs">Spring, Shimmer, Cloud, Plate, Hall, Room, Blom, Swel, Lofi</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-[#2a2a2a] rounded-xl">
+                <span className="text-2xl">📱</span>
+                <div>
+                  <p className="text-white text-sm font-bold">Instale no Celular</p>
+                  <p className="text-[#a0a0a0] text-xs">Toque em ? para ver como instalar como app</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowFirstTime(false);
+                localStorage.setItem('m-vave-seen-help', 'true');
+              }}
+              className="w-full py-3 bg-[#f5a623] text-black font-bold rounded-xl cursor-pointer hover:bg-[#e09500] active:scale-[0.98] transition-all"
+            >
+              Começar a Usar 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Ajuda */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in">
+          <div className="bg-[#1e1e1e] rounded-t-2xl sm:rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border-t sm:border border-[#2a2a2a]">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-[#f5a623] text-lg font-bold">📖 Como Usar</h2>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="w-8 h-8 rounded-full bg-[#2a2a2a] text-[#a0a0a0] flex items-center justify-center cursor-pointer hover:bg-[#333] transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Criar Presets */}
+              <div className="pb-4 border-b border-[#2a2a2a]">
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <span className="text-xl">➕</span> Criar Presets
+                </h3>
+                <ol className="text-sm text-[#a0a0a0] space-y-1 ml-8 list-decimal">
+                  <li>Toque no botão <span className="text-[#f5a623] font-bold">+</span> flutuante</li>
+                  <li>Dê um nome (ex: nome da música)</li>
+                  <li>Escolha o tipo de reverb</li>
+                  <li>Ajuste as posições dos knobs (7h a 5h)</li>
+                  <li>Toque em <span className="text-[#f5a623] font-bold">💾 Salvar</span></li>
+                </ol>
+              </div>
+
+              {/* Visualizar Pedal */}
+              <div className="pb-4 border-b border-[#2a2a2a]">
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <span className="text-xl">🎸</span> Ver o Pedal
+                </h3>
+                <p className="text-sm text-[#a0a0a0] ml-8">
+                  Em cada preset, toque no botão <span className="text-[#f5a623] font-bold">🎸</span> para ver uma representação visual do pedal com os knobs nas posições corretas.
+                </p>
+              </div>
+
+              {/* Editar/Deletar */}
+              <div className="pb-4 border-b border-[#2a2a2a]">
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <span className="text-xl">✏️</span> Editar e Deletar
+                </h3>
+                <ul className="text-sm text-[#a0a0a0] space-y-1 ml-8 list-disc">
+                  <li><span className="text-[#f5a623] font-bold">✏️</span> - Editar preset</li>
+                  <li><span className="text-[#cf6679] font-bold">🗑️</span> - Deletar preset (pede confirmação)</li>
+                </ul>
+              </div>
+
+              {/* Instalar como App */}
+              <div className="pb-4 border-b border-[#2a2a2a]">
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <span className="text-xl">📱</span> Instalar no Celular
+                </h3>
+                
+                <div className="ml-8 space-y-3">
+                  <div>
+                    <p className="text-sm text-white font-semibold mb-1">📲 Android (Chrome):</p>
+                    <ol className="text-xs text-[#a0a0a0] space-y-0.5 list-decimal ml-4">
+                      <li>Abra este app no Chrome</li>
+                      <li>Toque nos 3 pontos (⋮) no canto superior</li>
+                      <li>Selecione "Instalar app" ou "Adicionar à tela inicial"</li>
+                      <li>Confirme tocando em "Instalar"</li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-white font-semibold mb-1">🍎 iPhone (Safari):</p>
+                    <ol className="text-xs text-[#a0a0a0] space-y-0.5 list-decimal ml-4">
+                      <li>Abra este app no Safari</li>
+                      <li>Toque no botão Compartilhar (quadrado com seta ↑)</li>
+                      <li>Role para baixo e toque em "Adicionar à Tela de Início"</li>
+                      <li>Toque em "Adicionar" no canto superior direito</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-2 bg-[#f5a623]/10 border border-[#f5a623]/30 rounded-lg">
+                    <p className="text-xs text-[#f5a623]">
+                      💡 <strong>Dica:</strong> Após instalar, o app funciona offline e aparece como um app normal no seu celular!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sobre */}
+              <div>
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <span className="text-xl">ℹ️</span> Sobre
+                </h3>
+                <div className="text-xs text-[#a0a0a0] ml-8 space-y-1">
+                  <p>• Os presets são salvos no seu navegador</p>
+                  <p>• Funciona offline após o primeiro acesso</p>
+                  <p>• Os dados não são sincronizados entre dispositivos</p>
+                  <p>• Feito com ❤️ para músicos</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full mt-4 py-3 bg-[#2a2a2a] text-[#e0e0e0] font-bold rounded-xl cursor-pointer hover:bg-[#333] active:scale-[0.98] transition-all"
+            >
+              Entendi! 👍
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Formulário */}

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Como Usar o Meu Reverb no Celular</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #f5a623;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        .card {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            color: #f5a623;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #2a2a2a;
+            border-radius: 12px;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #f5a623;
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .step-desc {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+        .platform {
+            background: #161616;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #f5a623;
+        }
+        .platform h3 {
+            color: #fff;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tip {
+            background: rgba(245, 166, 35, 0.1);
+            border: 1px solid rgba(245, 166, 35, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .tip-title {
+            color: #f5a623;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tip-text {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .feature {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .feature-text {
+            font-size: 0.85rem;
+            color: #a0a0a0;
+        }
+        .btn {
+            display: inline-block;
+            background: #f5a623;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: #e09500;
+            transform: scale(1.02);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        code {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #f5a623;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 Como Usar o Meu Reverb</h1>
+        <p class="subtitle">Guia completo para usar o app no seu celular</p>
+
+        <!-- Opção 1: Deploy Online -->
+        <div class="card">
+            <h2>🌐 Opção 1: Hospedar Online (Recomendado)</h2>
+            <p style="color: #a0a0a0; margin-bottom: 15px;">
+                A maneira mais fácil é hospedar o app em um serviço gratuito. Assim você pode acessar de qualquer lugar!
+            </p>
+
+            <div class="platform">
+                <h3>🚀 Netlify (Mais Fácil)</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Acesse netlify.com</div>
+                        <div class="step-desc">Crie uma conta gratuita</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Arraste a pasta <code>dist</code></div>
+                        <div class="step-desc">Arraste a pasta <code>dist</code> para a área de deploy do Netlify</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Pronto!</div>
+                        <div class="step-desc">Você receberá um link como <code>meu-reverb.netlify.app</code></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="platform">
+                <h3>⚡ Vercel</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Acesse vercel.com</div>
+                        <div class="step-desc">Crie uma conta gratuita com GitHub</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Suba o projeto para o GitHub</div>
+                        <div class="step-desc">Crie um repositório e faça push do código</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Conecte no Vercel</div>
+                        <div class="step-desc">Importe o repositório e o Vercel faz o deploy automaticamente</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="platform">
+                <h3>🐙 GitHub Pages</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Crie um repositório no GitHub</div>
+                        <div class="step-desc">Suba o conteúdo da pasta <code>dist</code></div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Ative o GitHub Pages</div>
+                        <div class="step-desc">Vá em Settings → Pages → Source: main branch</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Acesse o link</div>
+                        <div class="step-desc">Seu app estará em <code>seu-usuario.github.io/nome-repo</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opção 2: Rede Local -->
+        <div class="card">
+            <h2>🏠 Opção 2: Rede Local (Sem Internet)</h2>
+            <p style="color: #a0a0a0; margin-bottom: 15px;">
+                Use o app apenas na sua rede WiFi, sem precisar de hospedagem externa.
+            </p>
+
+            <div class="platform">
+                <h3>💻 No Computador</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Abra o terminal na pasta do projeto</div>
+                        <div class="step-desc">Navegue até a pasta onde está o projeto</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Instale um servidor HTTP</div>
+                        <div class="step-desc"><code>npm install -g serve</code></div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Sirva a pasta dist</div>
+                        <div class="step-desc"><code>serve dist -l 3000</code></div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Descubra seu IP local</div>
+                        <div class="step-desc">
+                            Windows: <code>ipconfig</code><br>
+                            Mac/Linux: <code>ifconfig</code> ou <code>ip addr</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Acesse no celular</div>
+                        <div class="step-desc">Abra no celular: <code>http://192.168.X.X:3000</code> (use seu IP)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">💡 Dica Importante</div>
+                <div class="tip-text">
+                    O computador e o celular devem estar na mesma rede WiFi. O IP geralmente começa com <code>192.168.</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instalando como App -->
+        <div class="card">
+            <h2>📱 Instalando como App no Celular</h2>
+            <p style="color: #a0a0a0; margin-bottom: 15px;">
+                Após acessar o app pelo link, instale como aplicativo para usar offline!
+            </p>
+
+            <div class="platform">
+                <h3>📲 Android (Chrome)</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Abra o app no Chrome</div>
+                        <div class="step-desc">Acesse o link do app no navegador Chrome</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Toque no menu (⋮)</div>
+                        <div class="step-desc">Três pontos no canto superior direito</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Selecione "Instalar app"</div>
+                        <div class="step-desc">Ou "Adicionar à tela inicial"</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Confirme</div>
+                        <div class="step-desc">Toque em "Instalar" e o app aparecerá na tela inicial!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="platform">
+                <h3>🍎 iPhone (Safari)</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Abra o app no Safari</div>
+                        <div class="step-desc">Use o Safari (não funciona em outros navegadores no iOS)</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Toque no botão Compartilhar</div>
+                        <div class="step-desc">Ícone de quadrado com seta para cima (↑) na parte inferior</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Role para baixo</div>
+                        <div class="step-desc">Procure "Adicionar à Tela de Início"</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Toque em "Adicionar"</div>
+                        <div class="step-desc">Confirme no canto superior direito</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">✨ Vantagens de Instalar</div>
+                <div class="tip-text">
+                    • Funciona offline após o primeiro acesso<br>
+                    • Abre como app nativo (tela cheia)<br>
+                    • Ícone na tela inicial<br>
+                    • Acesso rápido sem abrir o navegador
+                </div>
+            </div>
+        </div>
+
+        <!-- Usando o App -->
+        <div class="card">
+            <h2>🎛️ Usando o App</h2>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">➕</div>
+                    <div class="feature-text">Toque no botão <strong>+</strong> para criar preset</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎸</div>
+                    <div class="feature-text">Veja o pedal com os knobs nas posições</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✏️</div>
+                    <div class="feature-text">Edite presets existentes</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🗑️</div>
+                    <div class="feature-text">Delete presets que não usa mais</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-text">Busque por nome ou tipo</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">❓</div>
+                    <div class="feature-text">Toque em ? para ver ajuda</div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">🎯 Dica de Uso</div>
+                <div class="tip-text">
+                    Use nomes descritivos como "Ocean Eyes - Worship" ou "Refrão - Hall" para encontrar seus presets rapidamente durante os ensaios!
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo -->
+        <div class="card" style="text-align: center;">
+            <h2 style="justify-content: center;">🚀 Resumo Rápido</h2>
+            <div style="color: #a0a0a0; margin: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong style="color: #f5a623;">1.</strong> Hospede o app (Netlify é o mais fácil)</p>
+                <p style="margin-bottom: 10px;"><strong style="color: #f5a623;">2.</strong> Acesse o link no celular</p>
+                <p style="margin-bottom: 10px;"><strong style="color: #f5a623;">3.</strong> Instale como app (Android/iPhone)</p>
+                <p><strong style="color: #f5a623;">4.</strong> Use offline sempre que precisar!</p>
+            </div>
+            <a href="index.html" class="btn">Abrir o App 🎸</a>
+        </div>
+    </div>
+</body>
+</html>
