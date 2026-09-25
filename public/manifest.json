@@ -1,0 +1,24 @@
+{
+  "name": "Meu Reverb - M-Vave Mini Universe",
+  "short_name": "Meu Reverb",
+  "description": "Gerenciador de presets para o pedal M-Vave Mini Universe Reverb",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#f5a623",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23121212'/><circle cx='256' cy='256' r='160' fill='%231e1e1e' stroke='%23f5a623' stroke-width='12'/><circle cx='256' cy='256' r='20' fill='%23f5a623'/><line x1='256' y1='256' x2='256' y2='130' stroke='%23f5a623' stroke-width='10' stroke-linecap='round'/><text x='256' y='460' text-anchor='middle' font-size='48' font-family='Arial' font-weight='bold' fill='%23f5a623'>REVERB</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='30' fill='%23121212'/><circle cx='96' cy='86' r='56' fill='%231e1e1e' stroke='%23f5a623' stroke-width='5'/><circle cx='96' cy='86' r='8' fill='%23f5a623'/><line x1='96' y1='86' x2='96' y2='42' stroke='%23f5a623' stroke-width='4' stroke-linecap='round'/><text x='96' y='170' text-anchor='middle' font-size='18' font-family='Arial' font-weight='bold' fill='%23f5a623'>REVERB</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
