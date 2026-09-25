@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Preset {
   id: string;
   name: string;
@@ -9,54 +10,262 @@ interface Preset {
   p1: string;
   p2: string;
   p3: string;
+  createdAt: number;
 }
 
-const clockPositions = [
-  '7h (Min)', '8h', '9h', '10h', '11h', '12h (Meio)', '1h', '2h', '3h', '4h', '5h (Max)'
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const CLOCK_POSITIONS = [
+  '7h', '8h', '9h', '10h', '11h', '12h', '1h', '2h', '3h', '4h', '5h'
 ];
 
-const reverbTypes = ['Cloud', 'Hall', 'Plate', 'Spring', 'Shimmer', 'Room', 'Mod', 'Trem'];
+const REVERB_TYPES = [
+  { name: 'Spring', icon: '🌀', color: '#4fc3f7' },
+  { name: 'Shimmer', icon: '✨', color: '#ce93d8' },
+  { name: 'Cloud', icon: '☁️', color: '#90caf9' },
+  { name: 'Plate', icon: '🪞', color: '#b0bec5' },
+  { name: 'Hall', icon: '🏛️', color: '#a5d6a7' },
+  { name: 'Room', icon: '🏠', color: '#ffcc80' },
+  { name: 'Blom', icon: '💥', color: '#ef9a9a' },
+  { name: 'Swel', icon: '🌊', color: '#80cbc4' },
+  { name: 'Lofi', icon: '📻', color: '#fff59d' },
+];
 
-const emptyPreset: Omit<Preset, 'id'> = {
+const KNOB_LABELS: { key: keyof Pick<Preset, 'decay' | 'mix' | 'p1' | 'p2' | 'p3'>; label: string }[] = [
+  { key: 'decay', label: 'Decay' },
+  { key: 'mix', label: 'Mix' },
+  { key: 'p1', label: 'Param 1' },
+  { key: 'p2', label: 'Param 2' },
+  { key: 'p3', label: 'Param 3' },
+];
+
+const DEFAULT_PRESET: Omit<Preset, 'id' | 'createdAt'> = {
   name: '',
-  type: 'Cloud',
-  decay: '12h (Meio)',
-  mix: '12h (Meio)',
-  p1: '12h (Meio)',
-  p2: '12h (Meio)',
-  p3: '12h (Meio)',
+  type: 'Spring',
+  decay: '12h',
+  mix: '12h',
+  p1: '12h',
+  p2: '12h',
+  p3: '12h',
 };
 
-function getPresets(): Preset[] {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function loadPresets(): Preset[] {
   try {
-    return JSON.parse(localStorage.getItem('pedalPresets') || '[]');
+    const data = localStorage.getItem('m-vave-presets');
+    return data ? JSON.parse(data) : [];
   } catch {
     return [];
   }
 }
 
 function savePresets(data: Preset[]) {
-  localStorage.setItem('pedalPresets', JSON.stringify(data));
+  localStorage.setItem('m-vave-presets', JSON.stringify(data));
 }
 
+function getReverbInfo(typeName: string) {
+  return REVERB_TYPES.find(t => t.name === typeName) || REVERB_TYPES[0];
+}
+
+// Converte posição do relógio em ângulo (7h = -150°, 5h = +150°)
+function clockToAngle(position: string): number {
+  const idx = CLOCK_POSITIONS.indexOf(position);
+  if (idx === -1) return 0;
+  // 7h = -150°, 5h = +150°, distribuídos em 10 passos
+  return -150 + (idx * 30);
+}
+
+// ─── Componente Knob Visual ───────────────────────────────────────────────────
+function KnobVisual({ value, label, color = '#f5a623', size = 64 }: { 
+  value: string; 
+  label: string; 
+  color?: string; 
+  size?: number;
+}) {
+  const angle = clockToAngle(value);
+  const r = size / 2 - 4;
+  const cx = size / 2;
+  const cy = size / 2;
+  
+  // Indicador do knob
+  const indicatorLength = r - 8;
+  const rad = (angle - 90) * (Math.PI / 180);
+  const x2 = cx + indicatorLength * Math.cos(rad);
+  const y2 = cy + indicatorLength * Math.sin(rad);
+
+  // Tick marks
+  const ticks = CLOCK_POSITIONS.map((pos, i) => {
+    const tickAngle = -150 + (i * 30);
+    const tickRad = (tickAngle - 90) * (Math.PI / 180);
+    const innerR = r - 3;
+    const outerR = r + 1;
+    return {
+      x1: cx + innerR * Math.cos(tickRad),
+      y1: cy + innerR * Math.sin(tickRad),
+      x2: cx + outerR * Math.cos(tickRad),
+      y2: cy + outerR * Math.sin(tickRad),
+      isActive: pos === value,
+    };
+  });
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Fundo do knob */}
+        <circle cx={cx} cy={cy} r={r - 4} fill="#2a2a2a" stroke="#3a3a3a" strokeWidth="1.5" />
+        
+        {/* Tick marks */}
+        {ticks.map((tick, i) => (
+          <line
+            key={i}
+            x1={tick.x1} y1={tick.y1}
+            x2={tick.x2} y2={tick.y2}
+            stroke={tick.isActive ? color : '#555'}
+            strokeWidth={tick.isActive ? 2 : 1}
+            strokeLinecap="round"
+          />
+        ))}
+        
+        {/* Centro do knob */}
+        <circle cx={cx} cy={cy} r={6} fill="#3a3a3a" />
+        
+        {/* Indicador */}
+        <line
+          x1={cx} y1={cy}
+          x2={x2} y2={y2}
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <circle cx={x2} cy={y2} r="2.5" fill={color} />
+      </svg>
+      <span className="text-[10px] text-[#a0a0a0] mt-0.5 leading-tight text-center">{label}</span>
+      <span className="text-xs font-bold text-white leading-tight">{value}</span>
+    </div>
+  );
+}
+
+// ─── Componente Knob Selector (para formulário) ──────────────────────────────
+function KnobSelector({ label, value, onChange }: { 
+  label: string; 
+  value: string; 
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center">
+      <label className="text-xs text-[#a0a0a0] mb-1 font-medium">{label}</label>
+      <div className="relative">
+        <KnobVisual value={value} label="" size={56} />
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          aria-label={label}
+        />
+      </div>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="mt-1 w-full p-1.5 bg-[#2a2a2a] border border-[#333] rounded text-[#e0e0e0] text-xs text-center outline-none focus:border-[#f5a623]"
+      >
+        {CLOCK_POSITIONS.map(pos => (
+          <option key={pos} value={pos}>{pos}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ─── Componente Preset Card ──────────────────────────────────────────────────
+function PresetCard({ preset, onEdit, onDelete }: { 
+  preset: Preset; 
+  onEdit: () => void; 
+  onDelete: () => void;
+}) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const reverbInfo = getReverbInfo(preset.type);
+
+  return (
+    <div className="bg-[#1e1e1e] rounded-2xl p-4 shadow-lg border border-[#2a2a2a] relative overflow-hidden">
+      {/* Barra de cor do tipo */}
+      <div className="absolute top-0 left-0 right-0 h-1" style={{ background: reverbInfo.color }} />
+      
+      {/* Header */}
+      <div className="flex justify-between items-start mb-3 mt-1">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-white font-bold text-base truncate">{preset.name}</h3>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-base">{reverbInfo.icon}</span>
+            <span className="text-sm font-semibold" style={{ color: reverbInfo.color }}>
+              {preset.type}
+            </span>
+          </div>
+        </div>
+        {showConfirm ? (
+          <div className="flex gap-1.5 ml-2">
+            <button
+              onClick={onDelete}
+              className="px-2.5 py-1 bg-[#cf6679] text-white text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+            >
+              ✓ Sim
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="px-2.5 py-1 bg-[#333] text-[#e0e0e0] text-xs font-bold rounded-lg cursor-pointer active:scale-95 transition-transform"
+            >
+              ✕ Não
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-1.5 ml-2">
+            <button
+              onClick={onEdit}
+              className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#f5a623] active:scale-95 transition-all"
+              aria-label="Editar"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="px-2.5 py-1 bg-[#2a2a2a] text-[#a0a0a0] text-xs font-bold rounded-lg cursor-pointer hover:text-[#cf6679] active:scale-95 transition-all"
+              aria-label="Apagar"
+            >
+              🗑️
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Knobs visuais */}
+      <div className="flex justify-around items-center py-2 bg-[#161616] rounded-xl">
+        <KnobVisual value={preset.decay} label="Decay" color={reverbInfo.color} size={56} />
+        <KnobVisual value={preset.mix} label="Mix" color={reverbInfo.color} size={56} />
+        <KnobVisual value={preset.p1} label="P1" color={reverbInfo.color} size={56} />
+        <KnobVisual value={preset.p2} label="P2" color={reverbInfo.color} size={56} />
+        <KnobVisual value={preset.p3} label="P3" color={reverbInfo.color} size={56} />
+      </div>
+    </div>
+  );
+}
+
+// ─── App Principal ────────────────────────────────────────────────────────────
 export default function App() {
-  const [presets, setPresets] = useState<Preset[]>(getPresets());
+  const [presets, setPresets] = useState<Preset[]>(loadPresets());
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Omit<Preset, 'id'>>(emptyPreset);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Omit<Preset, 'id' | 'createdAt'>>(DEFAULT_PRESET);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     savePresets(presets);
   }, [presets]);
 
-  const openNewForm = () => {
+  const openNew = useCallback(() => {
     setEditId(null);
-    setFormData(emptyPreset);
+    setFormData(DEFAULT_PRESET);
     setShowForm(true);
-  };
+  }, []);
 
-  const openEditForm = (id: string) => {
+  const openEdit = useCallback((id: string) => {
     const preset = presets.find(p => p.id === id);
     if (!preset) return;
     setEditId(id);
@@ -70,200 +279,219 @@ export default function App() {
       p3: preset.p3,
     });
     setShowForm(true);
-  };
+  }, [presets]);
 
-  const cancelForm = () => {
+  const cancelForm = useCallback(() => {
     setShowForm(false);
     setEditId(null);
-    setFormData(emptyPreset);
-  };
+  }, []);
 
-  const savePreset = () => {
+  const saveForm = useCallback(() => {
     if (!formData.name.trim()) {
       alert('Dê um nome para o preset!');
       return;
     }
-
     if (editId) {
-      setPresets(prev => prev.map(p => p.id === editId ? { ...formData, id: editId } : p));
+      setPresets(prev => prev.map(p => p.id === editId ? { ...p, ...formData } : p));
     } else {
-      const newPreset: Preset = { ...formData, id: Date.now().toString() };
-      setPresets(prev => [...prev, newPreset]);
+      const newPreset: Preset = {
+        ...formData,
+        id: Date.now().toString(),
+        createdAt: Date.now(),
+      };
+      setPresets(prev => [newPreset, ...prev]);
     }
     cancelForm();
-  };
+  }, [formData, editId, cancelForm]);
 
-  const deletePreset = (id: string) => {
+  const deletePreset = useCallback((id: string) => {
     setPresets(prev => prev.filter(p => p.id !== id));
-    setConfirmDelete(null);
-  };
+  }, []);
 
-  const updateField = (field: keyof Omit<Preset, 'id'>, value: string) => {
+  const updateField = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
+
+  const filteredPresets = presets.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const reverbInfo = getReverbInfo(formData.type);
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] p-4 pb-20 font-sans">
+    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] font-sans">
       {/* Header */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="w-28 h-28 rounded-full overflow-hidden mb-3 border-2 border-[#f5a623] shadow-lg shadow-[#f5a623]/20">
-          <img 
-            src="https://image.qwenlm.ai/generated-images/ad9513f9-75b8-48df-8d94-db801f356af9/_result.png" 
-            alt="M-Vave Mini Universe" 
-            className="w-full h-full object-cover"
-          />
+      <header className="sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-sm border-b border-[#2a2a2a] px-4 py-3">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-[#1e1e1e] border-2 border-[#f5a623] flex items-center justify-center text-lg">
+              🎸
+            </div>
+            <div>
+              <h1 className="text-[#f5a623] font-bold text-base leading-tight">Meu Reverb</h1>
+              <p className="text-[#666] text-[10px] leading-tight">M-Vave Mini Universe</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs text-[#666]">{presets.length} preset{presets.length !== 1 ? 's' : ''}</span>
+          </div>
         </div>
-        <h1 className="text-[#f5a623] text-2xl font-bold text-center">🎸 Meu Reverb</h1>
-        <p className="text-[#a0a0a0] text-sm mt-1">M-Vave Mini Universe</p>
-      </div>
+      </header>
 
-      {/* Add Button */}
-      {!showForm && (
-        <button
-          onClick={openNewForm}
-          className="w-full py-3 bg-[#f5a623] text-black font-bold rounded-lg text-base cursor-pointer hover:bg-[#e09500] transition-colors active:scale-[0.98]"
-        >
-          + Adicionar Novo Preset
-        </button>
-      )}
+      <main className="max-w-lg mx-auto px-4 py-4 pb-24">
+        {/* Formulário */}
+        {showForm && (
+          <div className="bg-[#1e1e1e] rounded-2xl p-4 mb-4 shadow-xl border border-[#2a2a2a] animate-in">
+            <h2 className="text-[#f5a623] text-lg font-bold mb-4 flex items-center gap-2">
+              {editId ? '✏️ Editar Preset' : '✨ Novo Preset'}
+            </h2>
 
-      {/* Form Card */}
-      {showForm && (
-        <div className="bg-[#1e1e1e] rounded-xl p-4 mb-4 shadow-lg">
-          <h2 className="text-[#f5a623] text-lg font-bold mb-4">
-            {editId ? `Editar: ${formData.name}` : 'Novo Preset'}
-          </h2>
+            {/* Nome */}
+            <div className="mb-3">
+              <label className="block text-xs text-[#a0a0a0] mb-1 font-medium">Nome da Música / Preset</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={e => updateField('name', e.target.value)}
+                placeholder="Ex: Adoração, Ocean Eyes..."
+                className="w-full p-2.5 bg-[#2a2a2a] border border-[#333] rounded-xl text-[#e0e0e0] text-sm outline-none focus:border-[#f5a623] transition-colors placeholder:text-[#555]"
+                autoFocus
+              />
+            </div>
 
-          {/* Name */}
-          <div className="mb-3">
-            <label className="block text-sm text-[#a0a0a0] mb-1">Nome da Música / Preset</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={e => updateField('name', e.target.value)}
-              placeholder="Ex: Adoração"
-              className="w-full p-2.5 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] text-base outline-none focus:border-[#f5a623] transition-colors"
-            />
+            {/* Tipo de Reverb */}
+            <div className="mb-4">
+              <label className="block text-xs text-[#a0a0a0] mb-2 font-medium">Tipo de Reverb</label>
+              <div className="grid grid-cols-3 gap-2">
+                {REVERB_TYPES.map(type => (
+                  <button
+                    key={type.name}
+                    onClick={() => updateField('type', type.name)}
+                    className={`p-2 rounded-xl text-center transition-all cursor-pointer active:scale-95 ${
+                      formData.type === type.name
+                        ? 'border-2 shadow-lg'
+                        : 'bg-[#2a2a2a] border-2 border-transparent'
+                    }`}
+                    style={formData.type === type.name ? {
+                      borderColor: type.color,
+                      background: `${type.color}15`,
+                      boxShadow: `0 0 12px ${type.color}30`
+                    } : {}}
+                  >
+                    <span className="text-lg block">{type.icon}</span>
+                    <span className="text-[10px] font-bold block mt-0.5" style={{
+                      color: formData.type === type.name ? type.color : '#a0a0a0'
+                    }}>
+                      {type.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Knobs */}
+            <div className="mb-4">
+              <label className="block text-xs text-[#a0a0a0] mb-2 font-medium">Posições dos Knobs</label>
+              <div className="grid grid-cols-5 gap-1">
+                {KNOB_LABELS.map(({ key, label }) => (
+                  <KnobSelector
+                    key={key}
+                    label={label}
+                    value={formData[key]}
+                    onChange={v => updateField(key, v)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="mb-4 p-3 bg-[#161616] rounded-xl">
+              <p className="text-[10px] text-[#666] mb-2 uppercase tracking-wider">Preview</p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white truncate">{formData.name || 'Sem nome'}</p>
+                  <p className="text-xs" style={{ color: reverbInfo.color }}>
+                    {reverbInfo.icon} {formData.type}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <KnobVisual value={formData.decay} label="" size={32} color={reverbInfo.color} />
+                  <KnobVisual value={formData.mix} label="" size={32} color={reverbInfo.color} />
+                </div>
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex gap-2">
+              <button
+                onClick={saveForm}
+                className="flex-1 py-3 bg-[#f5a623] text-black font-bold rounded-xl text-sm cursor-pointer hover:bg-[#e09500] active:scale-[0.98] transition-all"
+              >
+                💾 Salvar
+              </button>
+              <button
+                onClick={cancelForm}
+                className="flex-1 py-3 bg-[#2a2a2a] text-[#a0a0a0] font-bold rounded-xl text-sm cursor-pointer hover:bg-[#333] active:scale-[0.98] transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-
-          {/* Reverb Type */}
-          <div className="mb-3">
-            <label className="block text-sm text-[#a0a0a0] mb-1">Tipo de Reverb</label>
-            <select
-              value={formData.type}
-              onChange={e => updateField('type', e.target.value)}
-              className="w-full p-2.5 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] text-base outline-none focus:border-[#f5a623] transition-colors"
-            >
-              {reverbTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Knobs Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <KnobSelect label="Decay" value={formData.decay} onChange={v => updateField('decay', v)} />
-            <KnobSelect label="Mix" value={formData.mix} onChange={v => updateField('mix', v)} />
-            <KnobSelect label="Param 1" value={formData.p1} onChange={v => updateField('p1', v)} />
-            <KnobSelect label="Param 2" value={formData.p2} onChange={v => updateField('p2', v)} />
-            <KnobSelect label="Param 3" value={formData.p3} onChange={v => updateField('p3', v)} />
-          </div>
-
-          {/* Buttons */}
-          <button
-            onClick={savePreset}
-            className="w-full py-3 bg-[#f5a623] text-black font-bold rounded-lg text-base cursor-pointer hover:bg-[#e09500] transition-colors mb-2"
-          >
-            Salvar Preset
-          </button>
-          <button
-            onClick={cancelForm}
-            className="w-full py-3 bg-[#333] text-[#e0e0e0] font-bold rounded-lg text-base cursor-pointer hover:bg-[#444] transition-colors"
-          >
-            Cancelar
-          </button>
-        </div>
-      )}
-
-      {/* Presets List */}
-      <div className="mt-5 space-y-4">
-        {presets.length === 0 && !showForm && (
-          <p className="text-center text-[#a0a0a0]">Nenhum preset salvo ainda.</p>
         )}
 
-        {presets.map(preset => (
-          <div key={preset.id} className="bg-[#1e1e1e] rounded-xl p-4 shadow-lg">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-[#f5a623] text-lg font-bold">{preset.name}</h2>
-              {confirmDelete === preset.id ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => deletePreset(preset.id)}
-                    className="px-3 py-1 bg-[#cf6679] text-white text-xs font-bold rounded cursor-pointer hover:bg-[#b85567]"
-                  >
-                    Confirmar
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(null)}
-                    className="px-3 py-1 bg-[#333] text-[#e0e0e0] text-xs font-bold rounded cursor-pointer hover:bg-[#444]"
-                  >
-                    Não
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDelete(preset.id)}
-                  className="px-3 py-1 border border-[#cf6679] text-[#cf6679] text-xs font-bold rounded cursor-pointer hover:bg-[#cf6679]/10 transition-colors"
-                >
-                  Apagar
-                </button>
+        {/* Busca */}
+        {!showForm && presets.length > 0 && (
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="🔍 Buscar presets..."
+              className="w-full p-2.5 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl text-[#e0e0e0] text-sm outline-none focus:border-[#f5a623] transition-colors placeholder:text-[#555]"
+            />
+          </div>
+        )}
+
+        {/* Lista de Presets */}
+        <div className="space-y-3">
+          {filteredPresets.length === 0 && !showForm && (
+            <div className="text-center py-12">
+              <div className="text-5xl mb-3">🎵</div>
+              <p className="text-[#a0a0a0] text-sm">
+                {presets.length === 0
+                  ? 'Nenhum preset salvo ainda.'
+                  : 'Nenhum preset encontrado.'}
+              </p>
+              {presets.length === 0 && (
+                <p className="text-[#666] text-xs mt-1">
+                  Toque no botão abaixo para criar seu primeiro!
+                </p>
               )}
             </div>
-            <p className="text-sm text-[#a0a0a0] italic mb-3">Tipo: {preset.type}</p>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <KnobDisplay label="Decay" value={preset.decay} />
-              <KnobDisplay label="Mix" value={preset.mix} />
-              <KnobDisplay label="Param 1" value={preset.p1} />
-              <KnobDisplay label="Param 2" value={preset.p2} />
-              <KnobDisplay label="Param 3" value={preset.p3} />
-            </div>
+          )}
 
-            <button
-              onClick={() => openEditForm(preset.id)}
-              className="w-full mt-4 py-2.5 bg-[#333] text-[#e0e0e0] font-bold rounded-lg text-sm cursor-pointer hover:bg-[#444] transition-colors"
-            >
-              ✏️ Editar
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+          {filteredPresets.map(preset => (
+            <PresetCard
+              key={preset.id}
+              preset={preset}
+              onEdit={() => openEdit(preset.id)}
+              onDelete={() => deletePreset(preset.id)}
+            />
+          ))}
+        </div>
+      </main>
 
-function KnobSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div>
-      <label className="block text-sm text-[#a0a0a0] mb-1">{label}</label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full p-2.5 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] text-sm outline-none focus:border-[#f5a623] transition-colors"
-      >
-        {clockPositions.map(pos => (
-          <option key={pos} value={pos}>{pos}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function KnobDisplay({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center bg-[#2a2a2a] p-2 rounded-lg">
-      <span className="block text-xs text-[#a0a0a0] mb-1">{label}</span>
-      <span className="text-sm font-bold text-white">{value}</span>
+      {/* FAB - Botão Flutuante */}
+      {!showForm && (
+        <button
+          onClick={openNew}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-[#f5a623] text-black rounded-full shadow-lg shadow-[#f5a623]/30 flex items-center justify-center text-2xl font-bold cursor-pointer hover:bg-[#e09500] active:scale-90 transition-all z-40"
+          aria-label="Novo Preset"
+        >
+          +
+        </button>
+      )}
     </div>
   );
 }
