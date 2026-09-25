@@ -1,5 +1,27 @@
+# Dependencies
 node_modules/
-.next/
+
+# Build output (o Vercel gera isso automaticamente)
 dist/
-build/
+
+# Logs
 *.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+.next/
+build/

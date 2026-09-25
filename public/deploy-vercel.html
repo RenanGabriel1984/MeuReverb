@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy no Vercel - Guia Passo a Passo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        .vercel-logo {
+            display: inline-block;
+            background: #fff;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 30px;
+        }
+        .option {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 2px solid #2a2a2a;
+        }
+        .option.recommended {
+            border-color: #f5a623;
+            box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+        }
+        .option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .option h2 {
+            color: #f5a623;
+            font-size: 1.3rem;
+        }
+        .badge {
+            background: #f5a623;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge.alt {
+            background: #333;
+            color: #a0a0a0;
+        }
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 16px;
+            padding: 14px;
+            background: #161616;
+            border-radius: 12px;
+            border-left: 3px solid #f5a623;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #f5a623;
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-title {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .step-desc {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+        code {
+            background: #2a2a2a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #f5a623;
+            font-size: 0.85em;
+        }
+        .link {
+            display: inline-block;
+            background: #f5a623;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+        .link:hover {
+            background: #e09500;
+            transform: translateY(-2px);
+        }
+        .tip {
+            background: rgba(245, 166, 35, 0.1);
+            border: 1px solid rgba(245, 166, 35, 0.3);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .tip strong { color: #f5a623; }
+        .warning {
+            background: rgba(207, 102, 121, 0.1);
+            border: 1px solid rgba(207, 102, 121, 0.3);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .warning strong { color: #cf6679; }
+        .divider {
+            text-align: center;
+            color: #666;
+            margin: 30px 0;
+            position: relative;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #2a2a2a;
+        }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .final {
+            background: linear-gradient(135deg, #f5a623 0%, #e09500 100%);
+            color: #000;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .final h2 { margin-bottom: 12px; }
+        .checklist {
+            list-style: none;
+            text-align: left;
+            margin: 15px 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .checklist li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Deploy no <span class="vercel-logo">▲ Vercel</span></h1>
+        <p class="subtitle">Guia completo para publicar seu app Meu Reverb</p>
+
+        <!-- OPÇÃO A: Upload Direto -->
+        <div class="option recommended">
+            <div class="option-header">
+                <h2>📦 Opção A: Upload Direto</h2>
+                <span class="badge">⭐ MAIS FÁCIL</span>
+            </div>
+            <p style="color: #a0a0a0; margin-bottom: 16px;">
+                Sem precisar de GitHub. Ideal se você quer publicar rápido!
+            </p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Acesse o Vercel</div>
+                    <div class="step-desc">
+                        Vá para <a href="https://vercel.com" target="_blank" style="color: #f5a623;">vercel.com</a> e faça login na sua conta
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Clique em "Add New..." → "Project"</div>
+                    <div class="step-desc">
+                        No dashboard do Vercel, clique no botão azul no canto superior direito
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Escolha "Import Third-Party Git Repository" ou role para baixo</div>
+                    <div class="step-desc">
+                        Procure a opção <strong>"Deploy from a template"</strong> ou <strong>"Upload"</strong> na parte inferior da página
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">Arraste a pasta <code>dist</code></div>
+                    <div class="step-desc">
+                        Se estiver usando a opção de upload direto, arraste a pasta <code>dist</code> gerada pelo build
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-title">Aguarde o deploy</div>
+                    <div class="step-desc">
+                        Em alguns segundos seu app estará no ar! Você receberá um link como:<br>
+                        <code>meu-reverb-abc123.vercel.app</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>💡 Dica:</strong> Você pode personalizar o nome do domínio nas configurações do projeto para algo como <code>meu-reverb.vercel.app</code>
+            </div>
+        </div>
+
+        <div class="divider">ou</div>
+
+        <!-- OPÇÃO B: Via GitHub -->
+        <div class="option">
+            <div class="option-header">
+                <h2>🐙 Opção B: Via GitHub</h2>
+                <span class="badge alt">RECOMENDADO</span>
+            </div>
+            <p style="color: #a0a0a0; margin-bottom: 16px;">
+                Mais profissional. Deploys automáticos a cada alteração no código!
+            </p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Crie um repositório no GitHub</div>
+                    <div class="step-desc">
+                        Acesse <a href="https://github.com/new" target="_blank" style="color: #f5a623;">github.com/new</a> e crie um novo repositório (ex: <code>meu-reverb</code>)
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Envie o projeto para o GitHub</div>
+                    <div class="step-desc">
+                        No terminal, dentro da pasta do projeto, execute os comandos abaixo:
+                    </div>
+                    <div style="background: #000; padding: 12px; border-radius: 8px; margin-top: 8px; font-family: monospace; font-size: 0.85rem; overflow-x: auto;">
+                        <div style="color: #a0a0a0;"># Inicializa o git</div>
+                        <div style="color: #4fc3f7;">git init</div>
+                        <div style="color: #a0a0a0;"># Adiciona todos os arquivos</div>
+                        <div style="color: #4fc3f7;">git add .</div>
+                        <div style="color: #a0a0a0;"># Faz o primeiro commit</div>
+                        <div style="color: #4fc3f7;">git commit -m "Primeiro commit"</div>
+                        <div style="color: #a0a0a0;"># Define a branch principal</div>
+                        <div style="color: #4fc3f7;">git branch -M main</div>
+                        <div style="color: #a0a0a0;"># Conecta ao seu repositório</div>
+                        <div style="color: #4fc3f7;">git remote add origin https://github.com/SEU-USUARIO/meu-reverb.git</div>
+                        <div style="color: #a0a0a0;"># Envia para o GitHub</div>
+                        <div style="color: #4fc3f7;">git push -u origin main</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Conecte o Vercel ao GitHub</div>
+                    <div class="step-desc">
+                        No Vercel, clique em <strong>"Add New..." → "Project"</strong> e selecione o repositório <code>meu-reverb</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">Configure o Framework</div>
+                    <div class="step-desc">
+                        O Vercel vai detectar automaticamente que é um projeto Vite. Confirme as configurações:
+                    </div>
+                    <ul style="color: #a0a0a0; margin: 8px 0 0 20px; font-size: 0.9rem;">
+                        <li><strong>Framework Preset:</strong> Vite</li>
+                        <li><strong>Build Command:</strong> <code>npm run build</code></li>
+                        <li><strong>Output Directory:</strong> <code>dist</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-title">Clique em "Deploy"</div>
+                    <div class="step-desc">
+                        Aguarde alguns segundos e seu app estará no ar! 🎉
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>✨ Vantagem:</strong> A cada alteração que você fizer no código e enviar para o GitHub, o Vercel faz o deploy automaticamente!
+            </div>
+        </div>
+
+        <!-- Após o Deploy -->
+        <div class="option">
+            <div class="option-header">
+                <h2>📱 Após o Deploy</h2>
+            </div>
+            <p style="color: #a0a0a0; margin-bottom: 16px;">
+                Agora que seu app está no ar, instale no celular!
+            </p>
+
+            <div class="step">
+                <div class="step-number">📲</div>
+                <div class="step-content">
+                    <div class="step-title">Android (Chrome)</div>
+                    <div class="step-desc">
+                        1. Abra o link no Chrome<br>
+                        2. Toque nos 3 pontos (⋮)<br>
+                        3. Selecione <strong>"Instalar app"</strong><br>
+                        4. Confirme em "Instalar"
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">🍎</div>
+                <div class="step-content">
+                    <div class="step-title">iPhone (Safari)</div>
+                    <div class="step-desc">
+                        1. Abra o link no <strong>Safari</strong><br>
+                        2. Toque no botão Compartilhar (↑)<br>
+                        3. Selecione <strong>"Adicionar à Tela de Início"</strong><br>
+                        4. Toque em "Adicionar"
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Importante:</strong> No iPhone, use apenas o Safari! Outros navegadores não suportam PWA no iOS.
+            </div>
+        </div>
+
+        <!-- Checklist Final -->
+        <div class="final">
+            <h2>✅ Checklist Final</h2>
+            <ul class="checklist">
+                <li>Conta criada no Vercel</li>
+                <li>Projeto enviado para o GitHub (ou upload direto)</li>
+                <li>Deploy realizado com sucesso</li>
+                <li>Link funcionando no navegador</li>
+                <li>App instalado no celular</li>
+                <li>Funcionando offline!</li>
+            </ul>
+            <p style="margin-top: 15px; font-weight: bold;">
+                🎸 Agora é só usar e aproveitar seus presets!
+            </p>
+        </div>
+
+        <!-- Links Úteis -->
+        <div class="option" style="margin-top: 24px;">
+            <h2 style="color: #f5a623; margin-bottom: 12px;">🔗 Links Úteis</h2>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #2a2a2a;">
+                    <a href="https://vercel.com/dashboard" target="_blank" style="color: #f5a623; text-decoration: none;">
+                        → Dashboard do Vercel
+                    </a>
+                </li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #2a2a2a;">
+                    <a href="https://github.com/new" target="_blank" style="color: #f5a623; text-decoration: none;">
+                        → Criar repositório no GitHub
+                    </a>
+                </li>
+                <li style="padding: 8px 0;">
+                    <a href="index.html" style="color: #f5a623; text-decoration: none;">
+                        → Abrir o App Meu Reverb
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
